@@ -37,10 +37,8 @@
 
 #include <simpletools.h>
 #include "Qik.h"
-#include "ultrasonicsensor.h"
 #include "Encoder.h"
-#include "ParallaxPropellerProtocol.h"
-#include <Uart.h>
+#include "Uart.h"
 
 /// Entry point of application.
 int main(){
@@ -55,24 +53,6 @@ int main(){
   int ePin1 = 1;
   //Pin connected to the photointerrupter of the encoder on the right motor.
   int ePin2 = 3;
-  
-  //Pin connected to the ultrasonic sensor at the front of the rosbee on the left side.
-  int ussPin1 = 5;
-  //Pin connected to the ultrasonic sensor at the front of the rosbee in the middle.
-  int ussPin2 = 6;
-  //Pin connected to the ultrasonic sensor at the front of the rosbee on the right side.
-  int ussPin3 = 7;
-  //Pin connected to the ultrasonic sensor at the back of the rosbee on the left side.
-  int ussPin4 = 8;
-  //Pin connected to the ultrasonic sensor at the back of the rosbee on the right side.
-  int ussPin5 = 4;
-  //Pin connected to the ultrasonic sensor at the back of hte rosbee int the middle.
-  int ussPin6 = 9;
-  
-  //If you wish to send debug information to the console you need to make the propeller wait a sec.
-  //The propeller is faster then the startup of the console. This will result in data being missed. 
-  //Uncomment while debugging.
-  //sleep(1);
   
   //Uart object for communication.
   Uart uart;
@@ -93,17 +73,6 @@ int main(){
   //Encoder object fot the right motor.
   Encoder enc2{ePin2};
   
-  //Ultrasonic sensor object for the sensor front left. 
-  UltraSonicSensor uss1(ussPin1);
-  //Ultrasonic sensor object for the sensor front middle.
-  UltraSonicSensor uss2(ussPin2);
-  //Ultrasonic sensor object for the sensor front right.
-  UltraSonicSensor uss3(ussPin3);
-  //Ultrasonic sensor object for the sensor back left.
-  UltraSonicSensor uss4(ussPin4);
-  //Ultrasonic sensor object for the sensor front right.
-  UltraSonicSensor uss5(ussPin5);
-  
   //Variables used for communcation.
   //cmd = command byte received.
   //value = follow byte received.
@@ -113,13 +82,6 @@ int main(){
   char cmd, value, rtn;
   int intRtn;
   signed char speed;
-  
-  //qik.setMotorSpeed(Qik::Motor::M0, 30);
-  
-  //while (enc1.getEncoderCount() < 1588) {
-  //}   
-  
-  //qik.setMotorSpeed(Qik::Motor::M0, 0); 
   
   
   /*
@@ -226,79 +188,6 @@ int main(){
     //There was honestly no better way to do this that does
     //not require making infinite classes.
     switch(cmd){
-      //Motors
-      //Commands regarding the motor controllers.
-      case PPP::SET_SPEED_M0:
-        speed = uart.readChar();
-        qik.setMotorSpeed(Qik::Motor::M0,speed);
-        break;
-      case PPP::SET_SPEED_M1:
-        speed = uart.readChar();
-        qik.setMotorSpeed(Qik::Motor::M1,speed);
-        break;
-      case PPP::SET_BRAKE_SPEED_M0:
-        value = uart.readChar();
-        qik.setBrakePower(Qik::Motor::M0,value);
-        break;
-      case PPP::SET_BRAKE_SPEED_M1:
-        value = uart.readChar();
-        qik.setBrakePower(Qik::Motor::M1,value);
-        break;
-      case PPP::GET_FIRMWARE_VERSION:
-        rtn = static_cast<char>(qik.getFirmwareVersion());
-        uart.send(rtn);
-        break;
-      case PPP::GET_ERROR:
-        rtn = static_cast<char>(qik.getError());
-        uart.send(rtn);
-        break;
-        
-      //Encoders
-      //Commands regarding the encoders.
-      case PPP::GET_PULSE_COUNT_M0:
-        intRtn = enc1.getEncoderCount();
-        uart.send(intRtn);
-        break;
-      case PPP::GET_PULSE_COUNT_M1:
-        intRtn = enc2.getEncoderCount();
-        uart.send(intRtn);
-        break;
-      case PPP::GET_PULSE_SPEED_M0:
-        rtn = enc1.getSpeed();
-        uart.send(rtn);
-        break;
-      case PPP::GET_PULSE_SPEED_M1:
-        rtn = enc2.getSpeed();
-        uart.send(rtn);
-        break;  
-        
-      //Ultrasonic Sensors
-      //Commands regarding the ultrasonic sensors.
-      case PPP::GET_DISTANCE_S0:
-        intRtn = uss1.getDistance();
-        uart.send(intRtn);
-        break;
-      case PPP::GET_DISTANCE_S1:
-        intRtn = uss2.getDistance();
-        uart.send(intRtn);
-        break;
-      case PPP::GET_DISTANCE_S2:
-        intRtn = uss3.getDistance();
-        uart.send(intRtn);
-        break;
-      case PPP::GET_DISTANCE_S3:
-        intRtn = uss4.getDistance();
-        uart.send(intRtn);
-        break;
-      case PPP::GET_DISTANCE_S4:
-        intRtn = uss5.getDistance();
-        uart.send(intRtn);
-        break;
-      case PPP::GET_DISTANCE_S5:
-        intRtn = 0;
-        uart.send(intRtn);
-        break;
-      
       //Debug
       //Commands regarding debugging.
       case 'i':
@@ -333,23 +222,25 @@ int main(){
       case '[': {
         print("Starting M0 at %d for %d\n", wheelPower, totalCountsFor360WheelTurn);
         int encoderCountEncStart = enc1.getEncoderCount();
-        int currentLoops = enc1.getLoops();
+        //int currentLoops = enc1.getLoops();
         qik.setMotorSpeed(Qik::Motor::M0, wheelPower);
         while (enc1.getEncoderCount() < (totalCountsFor360WheelTurn + encoderCountEncStart)) {
         }
-        print("Loops: %d\n", enc1.getLoops() - currentLoops);   
+        //print("Loops: %d\n", enc1.getLoops() - currentLoops);   
         qik.setMotorSpeed(Qik::Motor::M0, 0); 
+        qik.setBrakePower(Qik::Motor::M0,100);
         break;
       }        
       case ']': {
         print("Starting M1 at %d for %d\n", wheelPower, totalCountsFor360WheelTurn);
         int encoderCountEncStart = enc2.getEncoderCount();
-        int currentLoops = enc2.getLoops();
+       // int currentLoops = enc2.getLoops();
         qik.setMotorSpeed(Qik::Motor::M1, wheelPower);
         while (enc2.getEncoderCount() < (totalCountsFor360WheelTurn + encoderCountEncStart)) {
         }   
-        print("Loops: %d\n", enc2.getLoops() - currentLoops);  
+        //print("Loops: %d\n", enc2.getLoops() - currentLoops);  
         qik.setMotorSpeed(Qik::Motor::M1, 0); 
+        qik.setBrakePower(Qik::Motor::M1,100);
         break;
       }
       case ',':

@@ -47,6 +47,7 @@ class Channel{
 private:
     T buffer[S];
     volatile int index;
+    unsigned int pulseCount;
 public:
 
     /// @brief Creates new channel object.

@@ -54,17 +54,13 @@ Encoder::~Encoder(){
  
 unsigned int Encoder::getEncoderCount(){
   //Return the amount of counted pulses.
-  return encoderCount; 
+  return pulseCount; 
 }
  
 int Encoder::getSpeed(){
   //Return the amount of counted pulses per second.
   return speed;  
 }
-
-unsigned int Encoder::getLoops() {
-  return loops; 
-}  
 
 void Encoder::run(void* obj){
   //Since we are sure the object is of type Encoder we can safely cast it back to a Encoder pointer. 
@@ -80,10 +76,7 @@ void Encoder::run(void* obj){
   //Var we use the calculate the speed.
   int lastSpeed = 0;
   //Start the reading, this will never end.
-  enc->loops = 0;
-  
   while(true){
-    enc->loops++;
     //Read the state of the pin.
     //1 = endocer blocked
     //0 = encoder can see the led
@@ -92,12 +85,28 @@ void Encoder::run(void* obj){
     //Check if the encoder was blocked the last time we read.
     //Check if the encoder is not blocked now.
     //If so the motor has rotated and moved the encoder disk along with it.
-    if(last != read){
+    if(last == 1 && read == 0){
       //Add a pulse to the counter.
-      enc->encoderCount++;
+      enc->pulseCount++;
     }
-    
+    //Update the last pin state with the new.
     last = read;
-          
+    //Add 1 tick the the time counter.
+    //This is equal to 2 ms.
+    count++;
+    //Check if we are 500 tick further.
+    //This is equal to 1 sec.
+    if(count >= 500){
+       //Restet the counter to 0.
+       //So we can begin counting a new second.
+       count = 0;
+       //Update the speed.
+       //The speed is equal to the current pulse count minus the pulse count a second ago.
+       enc->speed = (enc->pulseCount - lastSpeed);
+       //Update the pulse count from a second ago with the current pulse count.
+       lastSpeed = enc->pulseCount; 
+    }      
+    //Wait 2000 microseconds aka 2 milliseconds.
+    waitcnt(CNT + 20 * us);      
   }   
 } 
