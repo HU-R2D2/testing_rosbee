@@ -47,7 +47,8 @@
 class Encoder{
 private:
   int pin;
-  unsigned int pulseCount;
+  unsigned int encoderCount;
+  unsigned int loops;
   int speed;
   // This is the minimum stack size required to for the cog (thread) to run.
   // Don't set it below 192.
@@ -71,7 +72,7 @@ public:
   ///
   /// Get the amount of pulses counted since the creation of this object.
   /// @return The pulse count.
-  unsigned int getPulseCount();
+  unsigned int getEncoderCount();
   
   /// @brief Get pulse speed.
   ///
@@ -80,6 +81,8 @@ public:
   /// The speed is calculated from a second ago and may lag behind the reality a little.
   /// @return The pulse count last second.
   int getSpeed();
+  
+  unsigned int getLoops();
 };
   
 #endif // _ENCODER_H

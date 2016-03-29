@@ -52,9 +52,9 @@ int main(){
   int qBaud = 115200;
   
   //Pin connected to the photointerrupter of the encoder on the left motor.
-  int ePin1 = 10;
+  int ePin1 = 1;
   //Pin connected to the photointerrupter of the encoder on the right motor.
-  int ePin2 = 11;
+  int ePin2 = 3;
   
   //Pin connected to the ultrasonic sensor at the front of the rosbee on the left side.
   int ussPin1 = 5;
@@ -114,6 +114,105 @@ int main(){
   int intRtn;
   signed char speed;
   
+  //qik.setMotorSpeed(Qik::Motor::M0, 30);
+  
+  //while (enc1.getEncoderCount() < 1588) {
+  //}   
+  
+  //qik.setMotorSpeed(Qik::Motor::M0, 0); 
+  
+  
+  /*
+   *
+   *  TEST CODE
+   *
+   */
+  if (false) {
+  // Sleep 5 seconds before starting test
+  pause(5000);
+  
+  // Using the encoder count of one specific Rosbee, might be different for others
+  int totalCounts360WheelTurn = 1588; // In encoder counts
+  int wheelCircumference = 386; // In mm
+  
+  // Keep track of amount of encoder ticks
+  int startEncoderCountEnc1 = enc1.getEncoderCount();
+  int startEncoderCountEnc2 = enc2.getEncoderCount();
+  int enc1Count = 0;
+  int enc2Count = 0;
+  int encoderCount = 0;
+  
+  // Motor power
+  int motorPower = 30;
+  
+  // 3m forward
+  int distanceToGo = 3000; // In mm
+  
+  // Target encoder count
+  float encoderCountTarget = totalCounts360WheelTurn * (distanceToGo / wheelCircumference);
+  
+  // Turn both left and right motors on at a given power
+  qik.setMotorSpeed(Qik::Motor::M0, motorPower);
+  qik.setMotorSpeed(Qik::Motor::M1, motorPower);
+  
+  // While robot hasn't reached the distanceToGo
+  while(encoderCount < encoderCountTarget) {
+    int encoderCountEnc1 = enc1.getEncoderCount() - startEncoderCountEnc1;
+    int encoderCountEnc2 = enc2.getEncoderCount() - startEncoderCountEnc2;
+    encoderCount = (encoderCountEnc1 + encoderCountEnc2) / 2; 
+  } 
+  
+  // Turn both left and right motors off
+  qik.setMotorSpeed(Qik::Motor::M0, 0);
+  qik.setMotorSpeed(Qik::Motor::M1, 0);      
+  
+  // Sleep for 20 seconds to give us some time to measure 
+  pause(20000);
+  
+  // Reset the start encoder count
+  startEncoderCountEnc1 = enc1.getEncoderCount();
+  startEncoderCountEnc2 = enc2.getEncoderCount();
+  encoderCount = 0;
+  
+  // Distance for one circle of Rosbee
+  distanceToGo = 1058; // In mm
+  
+  // Target encoder count
+  encoderCountTarget = totalCounts360WheelTurn * (distanceToGo / wheelCircumference);
+  
+  // Turn left and right motors on with an opposite motorPower so the robot will drive in a circle
+  qik.setMotorSpeed(Qik::Motor::M0, motorPower);
+  qik.setMotorSpeed(Qik::Motor::M1, -motorPower); 
+     
+  // While robot hasn't reached the distanceToGo   
+  while(encoderCount < encoderCountTarget) {
+    int encoderCountEnc1 = enc1.getEncoderCount() - startEncoderCountEnc1;
+    int encoderCountEnc2 = enc2.getEncoderCount() - startEncoderCountEnc2;
+    encoderCount = (encoderCountEnc1 + encoderCountEnc2) / 2;            
+  } 
+   
+  // Turn both left and right motors off
+  qik.setMotorSpeed(Qik::Motor::M0, 0);
+  qik.setMotorSpeed(Qik::Motor::M1, 0);
+  
+  /*
+   *
+   * END TEST CODE
+   *
+   */
+}
+  
+  
+  
+  
+  int totalCountsFor360WheelTurn = 1500;
+  int countChangeStepSize = 100;
+  int wheelPower = 30;
+  
+  qik.setBrakePower(Qik::Motor::M0, 127);
+  qik.setBrakePower(Qik::Motor::M1, 127); 
+  
+  
   //Run forever.
   //The rosbee is expected to work as long as it has power.
   //Therefore  this loop never needs to end.
@@ -157,11 +256,11 @@ int main(){
       //Encoders
       //Commands regarding the encoders.
       case PPP::GET_PULSE_COUNT_M0:
-        intRtn = enc1.getPulseCount();
+        intRtn = enc1.getEncoderCount();
         uart.send(intRtn);
         break;
       case PPP::GET_PULSE_COUNT_M1:
-        intRtn = enc2.getPulseCount();
+        intRtn = enc2.getEncoderCount();
         uart.send(intRtn);
         break;
       case PPP::GET_PULSE_SPEED_M0:
@@ -211,9 +310,59 @@ int main(){
          case 'b':
         qik.setMotorSpeed(Qik::Motor::M1,0);
         break;
+        
+      case '+':
+        totalCountsFor360WheelTurn = totalCountsFor360WheelTurn + countChangeStepSize;
+        print("Total: %d\n", totalCountsFor360WheelTurn);
+        break;
+      case '-':
+        totalCountsFor360WheelTurn = totalCountsFor360WheelTurn - countChangeStepSize;
+        print("Total: %d\n", totalCountsFor360WheelTurn);
+        break;
+      case '*':
+        countChangeStepSize = countChangeStepSize * 10;
+        print("Count change step size: %d\n", countChangeStepSize);          
+        break;
+      case '/':
+        countChangeStepSize = countChangeStepSize / 10;
+        if (countChangeStepSize < 1) {
+          countChangeStepSize = 1; 
+        }
+        print("Count change step size: %d\n", countChangeStepSize);          
+        break;
+      case '[': {
+        print("Starting M0 at %d for %d\n", wheelPower, totalCountsFor360WheelTurn);
+        int encoderCountEncStart = enc1.getEncoderCount();
+        int currentLoops = enc1.getLoops();
+        qik.setMotorSpeed(Qik::Motor::M0, wheelPower);
+        while (enc1.getEncoderCount() < (totalCountsFor360WheelTurn + encoderCountEncStart)) {
+        }
+        print("Loops: %d\n", enc1.getLoops() - currentLoops);   
+        qik.setMotorSpeed(Qik::Motor::M0, 0); 
+        break;
+      }        
+      case ']': {
+        print("Starting M1 at %d for %d\n", wheelPower, totalCountsFor360WheelTurn);
+        int encoderCountEncStart = enc2.getEncoderCount();
+        int currentLoops = enc2.getLoops();
+        qik.setMotorSpeed(Qik::Motor::M1, wheelPower);
+        while (enc2.getEncoderCount() < (totalCountsFor360WheelTurn + encoderCountEncStart)) {
+        }   
+        print("Loops: %d\n", enc2.getLoops() - currentLoops);  
+        qik.setMotorSpeed(Qik::Motor::M1, 0); 
+        break;
+      }
+      case ',':
+        wheelPower = wheelPower - 1;
+        print("Wheelpower: %d\n", wheelPower);
+        break;  
+      case '.':
+        wheelPower = wheelPower + 1;
+        print("Wheelpower: %d\n", wheelPower);
+        break;      
       
     } // End switch.             
   } // End while.
   //The program should never come here, but it's required by the compiler.
   return 0;
-}  
+}    
