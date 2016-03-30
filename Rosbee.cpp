@@ -94,7 +94,7 @@ int main(){
   pause(5000);
   
   // Using the encoder count of one specific Rosbee, might be different for others
-  int totalCounts360WheelTurn = 1588; // In encoder counts
+  int totalCounts360WheelTurn = 755; // In encoder counts
   int wheelCircumference = 386; // In mm
   
   // Keep track of amount of encoder ticks
@@ -111,7 +111,7 @@ int main(){
   int distanceToGo = 3000; // In mm
   
   // Target encoder count
-  float encoderCountTarget = totalCounts360WheelTurn * (distanceToGo / wheelCircumference);
+  float encoderCountTarget = totalCounts360WheelTurn * ((float)distanceToGo / wheelCircumference);
   
   // Turn both left and right motors on at a given power
   qik.setMotorSpeed(Qik::Motor::M0, motorPower);
@@ -126,10 +126,14 @@ int main(){
   
   // Turn both left and right motors off
   qik.setMotorSpeed(Qik::Motor::M0, 0);
-  qik.setMotorSpeed(Qik::Motor::M1, 0);      
+  qik.setMotorSpeed(Qik::Motor::M1, 0);
+  
+  pause(20000);
+  
+  
   
   // Sleep for 20 seconds to give us some time to measure 
-  pause(20000);
+  //pause(20000);
   
   // Reset the start encoder count
   startEncoderCountEnc1 = enc1.getEncoderCount();
@@ -137,10 +141,10 @@ int main(){
   encoderCount = 0;
   
   // Distance for one circle of Rosbee
-  distanceToGo = 1058; // In mm
+  distanceToGo = 1037; // In mm
   
   // Target encoder count
-  encoderCountTarget = totalCounts360WheelTurn * (distanceToGo / wheelCircumference);
+  encoderCountTarget = totalCounts360WheelTurn * ((float)distanceToGo / wheelCircumference);
   
   // Turn left and right motors on with an opposite motorPower so the robot will drive in a circle
   qik.setMotorSpeed(Qik::Motor::M0, motorPower);
@@ -162,9 +166,7 @@ int main(){
    * END TEST CODE
    *
    */
-}
-  
-  
+}   
   
   
   int totalCountsFor360WheelTurn = 1500;
